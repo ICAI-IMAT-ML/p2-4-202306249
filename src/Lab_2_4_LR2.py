@@ -98,6 +98,8 @@ class LinearRegressor:
         self.intercept = np.random.rand() * 0.01
 
         mse_values = []
+        w_values = []
+        b_values = []
 
         # Implement gradient descent (TODO)
         for epoch in range(iterations):
@@ -109,22 +111,60 @@ class LinearRegressor:
             gradient_b = (1/m) * np.sum(error)
             self.intercept -= learning_rate * gradient_b
             self.coefficients -= learning_rate * gradient_w
-
-            # TODO: Calculate and print the loss every 10 epochs
+            
+            # TODO: Calculate and print the loss every 100 epochs
             if epoch % 100 == 0:
                 mse = np.mean(error**2)
                 mse_values.append(mse)
                 print(f"Epoch {epoch}: MSE = {mse}")
 
-        # Representamos el descenso de gradiente
-        plt.figure(figsize=(8, 5))
-        plt.plot(range(0, iterations, 100), mse_values, marker='o', linestyle='-', color='b', label="MSE over iterations")
-        plt.xlabel("Epochs")
-        plt.ylabel("Mean Squared Error (MSE)")
-        plt.title("Gradient Descent Progress")
-        plt.legend()
-        plt.grid()
+                # Además de medir el error, mediremos también los valros de los coeficientes y del interecept
+                w_values.append(self.coefficients.copy())  
+                b_values.append(self.intercept)
+
+        w_values = np.array(w_values)
+        b_values = np.array(b_values)
+
+        # Importamos scikit learn para comparar resultados
+        from sklearn.linear_model import LinearRegression
+
+        # Calculamos la solución óptima usando Scikit-learn para comparar
+        model = LinearRegression()
+        model.fit(X[:, 1:], y)
+        optimal_w = model.coef_  
+        optimal_b = model.intercept_
+
+        # Seleccionar solo el primer coeficiente w para la visualización
+        w_values_plot = w_values[:, 0]  # Tomamos el primer coeficiente de cada iteración
+        optimal_w_plot = optimal_w[0]  # Tomamos solo el primer coeficiente de Scikit-Learn
+
+        # Imprimimos cuáles son los valores de w y b que hemos obtenido, con mi función y con scikit learn para comparar
+        print(f"Valores de w y b según Scikit-learn: ({optimal_w_plot}, {optimal_b}")
+        print(f"Valores de w y b calculados con mi descenso de gradiente: ({w_values_plot[-1]}, {b_values[-1]})")
+
+        # Graficamos dos gráficos, la evolución del mse y la evolución de los coeficientes e intercept
+        fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+        # Evolución del MSE
+        axes[0].plot(range(0, iterations, 100), mse_values, linestyle='-', color='b', label="MSE over iterations")
+        axes[0].set_xlabel("Epochs")
+        axes[0].set_ylabel("Mean Squared Error (MSE)")
+        axes[0].set_title("Progreso del descenso de gradiente")
+        axes[0].legend()
+
+        # Evolución de w y b
+        axes[1].plot(w_values_plot, b_values, linestyle='-', marker='o', color='b', label="Gradient Descent Path")
+        # Marcamos la solución de scikit learn con una cruz roja para comparar
+        axes[1].scatter(optimal_w_plot, optimal_b, color='r', marker='x', s=100, label="Optimal Solution (Scikit-Learn)")
+        axes[1].set_xlabel("First w value")
+        axes[1].set_ylabel("b values")
+        axes[1].set_title("Gradient Descent Steps Towards Optimum")
+        axes[1].legend()
+
+        plt.tight_layout()
         plt.show()
+        
+        
 
 
     def predict(self, X):
